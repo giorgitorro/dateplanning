@@ -1,0 +1,91 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<style>:root{color-scheme:light}body{margin:0}img{max-width:100%}[hidden]{display:none!important}</style>
+<title>Dinner Picker</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:wght@700;800&family=DM+Sans:wght@400;500;700&display=swap">
+<style>
+  :root {
+    --bg: #eef1ff;
+    --ink: #16163a;
+    --muted: #55557a;
+    --card: #ffffff;
+    --edge: #16163a;
+    --accent: #d92b18;
+    --on-accent: #ffffff;
+    --pop: #ffd23f;
+    --on-pop: #16163a;
+    --font-display: "Bricolage Grotesque", "Arial Black", system-ui, sans-serif;
+    --font-body: "DM Sans", system-ui, -apple-system, "Segoe UI", sans-serif;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) {
+      --bg: #12122b;
+      --ink: #f1efff;
+      --muted: #a7a5cf;
+      --card: #1d1d3f;
+      --edge: #7f7cf0;
+      --accent: #ff6b5a;
+      --on-accent: #16163a;
+      color-scheme: dark;
+    }
+  }
+  :root[data-theme="dark"] {
+    --bg: #12122b;
+    --ink: #f1efff;
+    --muted: #a7a5cf;
+    --card: #1d1d3f;
+    --edge: #7f7cf0;
+    --accent: #ff6b5a;
+    --on-accent: #16163a;
+    color-scheme: dark;
+  }
+
+  * { box-sizing: border-box; }
+  body {
+    background: var(--bg);
+    color: var(--ink);
+    font-family: var(--font-body);
+    font-size: 16px;
+    line-height: 1.5;
+    padding-left: max(16px, env(safe-area-inset-left, 0px));
+    padding-right: max(16px, env(safe-area-inset-right, 0px));
+    padding-block: 28px 56px;
+  }
+  .wrap { max-width: 640px; margin: 0 auto; display: flex; flex-direction: column; gap: 20px; }
+
+  header { display: flex; flex-direction: column; gap: 12px; align-items: flex-start; }
+  .stamp {
+    font-family: var(--font-display);
+    font-weight: 800;
+    font-size: 0.8rem;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    background: var(--pop);
+    color: var(--on-pop);
+    border: 2px solid var(--edge);
+    padding: 4px 10px;
+    transform: rotate(-2deg);
+  }
+  h1 {
+    font-family: var(--font-display);
+    font-weight: 800;
+    font-size: clamp(2.3rem, 9vw, 3.4rem);
+    line-height: 1;
+    margin: 0;
+    text-wrap: balance;
+  }
+  .name {
+    background: var(--pop);
+    color: var(--on-pop);
+    padding: 0 0.15em;
+    margin-right: 0.05em;
+    box-decoration-break: clone;
+    -webkit-box-decoration-break: clone;
+  }
+  .lede { margin: 0; color: var(--muted); max-width: 46ch; }
+
+  .card {
+    background: var(--
