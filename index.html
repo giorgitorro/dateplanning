@@ -5,8 +5,10 @@
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
 <style>:root{color-scheme:light}body{margin:0}img{max-width:100%}[hidden]{display:none!important}</style>
 <title>Dinner Picker</title>
+<meta name="claude:viewport-fit-sides" content="cover">
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:wght@700;800&family=DM+Sans:wght@400;500;700&display=swap">
 <style>
+  /* Layout: one narrow column of chunky question cards, tomato button at the bottom */
   :root {
     --bg: #eef1ff;
     --ink: #16163a;
@@ -88,4 +90,221 @@
   .lede { margin: 0; color: var(--muted); max-width: 46ch; }
 
   .card {
-    background: var(--
+    background: var(--card);
+    border: 2px solid var(--edge);
+    box-shadow: 5px 5px 0 var(--edge);
+    padding: 16px;
+    min-width: 0;
+  }
+  fieldset { border: 0; margin: 0; padding: 0; min-width: 0; }
+  legend { padding: 0; width: 100%; }
+  .q { font-family: var(--font-display); font-weight: 800; font-size: 1.25rem; line-height: 1.2; display: block; }
+  .hint { display: block; color: var(--muted); font-size: 0.85rem; margin-top: 2px; }
+  .chips { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 12px; }
+
+  .chip { position: relative; display: inline-flex; min-width: 0; }
+  .chip input { position: absolute; opacity: 0; inset: 0; width: 100%; height: 100%; margin: 0; cursor: pointer; }
+  .chip span {
+    display: inline-flex; align-items: center; gap: 6px;
+    padding: 8px 14px;
+    border: 2px solid var(--edge);
+    background: var(--card);
+    color: var(--ink);
+    font-weight: 500;
+    transition: transform 0.12s ease, background-color 0.12s ease;
+  }
+  .chip small { color: var(--muted); font-size: 0.78rem; font-weight: 400; }
+  .chip:hover span { transform: translateY(-2px); }
+  .chip input:checked + span { background: var(--pop); color: var(--on-pop); font-weight: 700; box-shadow: 3px 3px 0 var(--edge); }
+  .chip input:checked + span small { color: var(--on-pop); }
+  .chip input:focus-visible + span { outline: 3px solid var(--accent); outline-offset: 2px; }
+
+  textarea {
+    width: 100%; min-height: 96px; margin-top: 12px; resize: vertical;
+    font: inherit; color: var(--ink); background: var(--bg);
+    border: 2px solid var(--edge); padding: 10px 12px;
+  }
+  textarea:focus-visible { outline: 3px solid var(--accent); outline-offset: 2px; }
+  textarea::placeholder { color: var(--muted); }
+
+  button {
+    font: inherit; font-family: var(--font-display); font-weight: 800; font-size: 1.1rem;
+    cursor: pointer; border: 2px solid var(--edge); padding: 12px 20px;
+    background: var(--accent); color: var(--on-accent); box-shadow: 5px 5px 0 var(--edge);
+    transition: transform 0.1s ease, box-shadow 0.1s ease;
+  }
+  button:hover { transform: translate(-1px, -1px); box-shadow: 6px 6px 0 var(--edge); }
+  button:active { transform: translate(4px, 4px); box-shadow: 1px 1px 0 var(--edge); }
+  button:focus-visible { outline: 3px solid var(--pop); outline-offset: 3px; }
+  button.ghost { background: var(--card); color: var(--ink); font-size: 0.95rem; padding: 10px 16px; }
+  .actions { display: flex; flex-wrap: wrap; gap: 12px; align-items: center; }
+  .warn { margin: 0; color: var(--accent); font-weight: 700; }
+
+  #result { gap: 12px; flex-direction: column; display: flex; }
+  #result[hidden] { display: none; }
+  #summary { margin-top: 0; min-height: 168px; background: var(--bg); font-family: var(--font-body); }
+  .toast { margin: 0; font-weight: 700; min-height: 1.5em; }
+
+  @media (prefers-reduced-motion: reduce) {
+    .chip span, button { transition: none; }
+    .chip:hover span, button:hover { transform: none; }
+  }
+</style>
+
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <span class="stamp" id="stamp">3 years: plan pending</span>
+    <h1><span class="name">Lizi,</span> help me pick the spot.</h1>
+    <p class="lede">Three years in, so it needs a proper plan. Pick a time, tell me what you're craving and what kind of place. If you already know where you want to go, put it in the box at the bottom.</p>
+  </header>
+
+  <form id="form" class="wrap" style="gap:20px" novalidate>
+    <fieldset class="card">
+      <legend><span class="q">What time?</span><span class="hint">Pick one</span></legend>
+      <div class="chips" id="times"></div>
+    </fieldset>
+
+    <fieldset class="card">
+      <legend><span class="q">What are you craving?</span><span class="hint">Pick as many as you like</span></legend>
+      <div class="chips" id="cuisine"></div>
+    </fieldset>
+
+    <fieldset class="card">
+      <legend><span class="q">What kind of place?</span><span class="hint">Pick as many as you like</span></legend>
+      <div class="chips" id="vibe"></div>
+    </fieldset>
+
+    <fieldset class="card">
+      <legend><span class="q">And after?</span><span class="hint">Pick as many as you like</span></legend>
+      <div class="chips" id="after"></div>
+    </fieldset>
+
+    <div class="card">
+      <label for="note" class="q">Already have a place in mind?</label>
+      <span class="hint">Name it here, or add anything else I should know.</span>
+      <textarea id="note" placeholder="A restaurant, a craving, a rule I should follow..."></textarea>
+    </div>
+
+    <div class="actions">
+      <button type="submit" id="lock">Lock it in</button>
+      <p class="warn" id="warn" role="alert" hidden>Pick at least one thing first.</p>
+    </div>
+  </form>
+
+  <section class="card" id="result" hidden aria-live="polite">
+    <span class="q">Done. One last step.</span>
+    <span class="hint">Copy this and paste it in our chat, so I get your answers.</span>
+    <textarea id="summary" readonly aria-label="Your answers"></textarea>
+    <div class="actions">
+      <button type="button" id="copy">Copy my answers</button>
+      <button type="button" id="edit" class="ghost">Change something</button>
+    </div>
+    <p class="toast" id="toast"></p>
+  </section>
+</div>
+
+<script>
+(function () {
+  var TIMES = ["19:00", "19:30", "20:00", "20:30", "21:00", "21:30", "22:00"];
+  var CUISINE = [
+    ["🥟", "Georgian", "khinkali, khachapuri"], ["🍕", "Pizza"], ["🍔", "Burger"],
+    ["🍣", "Sushi"], ["🍝", "Pasta"], ["🍜", "Noodles"], ["🌮", "Mexican"],
+    ["🥩", "Steak"], ["🌯", "Street food"], ["🍰", "Just dessert"], ["🎲", "Surprise me"]
+  ];
+  var VIBE = ["Chill and casual", "Dressy-ish", "Terrace or outdoors", "Cozy corner", "Loud and lively"];
+  var AFTER = ["A walk", "Movie", "Drinks", "Dessert somewhere else", "Straight home"];
+
+  function chip(group, type, value, text, small) {
+    var label = document.createElement("label");
+    label.className = "chip";
+    var input = document.createElement("input");
+    input.type = type;
+    input.name = group;
+    input.value = value;
+    var span = document.createElement("span");
+    span.appendChild(document.createTextNode(text));
+    if (small) {
+      var s = document.createElement("small");
+      s.textContent = small;
+      span.appendChild(s);
+    }
+    label.appendChild(input);
+    label.appendChild(span);
+    return label;
+  }
+
+  function fill(id, group, type, items) {
+    var box = document.getElementById(id);
+    items.forEach(function (it) { box.appendChild(chip(group, type, it.value, it.text, it.small)); });
+  }
+
+  fill("times", "time", "radio", TIMES.map(function (t) { return { value: t, text: t, small: "" }; }));
+  fill("cuisine", "cuisine", "checkbox", CUISINE.map(function (c) { return { value: c[1], text: c[0] + " " + c[1], small: c[2] || "" }; }));
+  fill("vibe", "vibe", "checkbox", VIBE.map(function (v) { return { value: v, text: v, small: "" }; }));
+  fill("after", "after", "checkbox", AFTER.map(function (a) { return { value: a, text: a, small: "" }; }));
+
+  var form = document.getElementById("form");
+  var result = document.getElementById("result");
+  var summary = document.getElementById("summary");
+  var toast = document.getElementById("toast");
+  var warn = document.getElementById("warn");
+  var stamp = document.getElementById("stamp");
+
+  function vals(name) {
+    return Array.prototype.map.call(form.querySelectorAll('input[name="' + name + '"]:checked'), function (el) { return el.value; });
+  }
+  function line(label, arr) { return label + ": " + (arr.length ? arr.join(", ") : "no preference"); }
+
+  form.addEventListener("submit", function (e) {
+    e.preventDefault();
+    var note = document.getElementById("note").value.trim();
+    var data = { days: [], time: vals("time"), cuisine: vals("cuisine"), vibe: vals("vibe"), after: vals("after") };
+    var any = data.time.length + data.cuisine.length + data.vibe.length + data.after.length + note.length;
+    if (!any) { warn.hidden = false; return; }
+    warn.hidden = true;
+    summary.value = [
+      "My answers for our 3 year date:",
+      line("Time", data.time),
+      line("Craving", data.cuisine),
+      line("Place", data.vibe),
+      line("After", data.after),
+      "Already have a place in mind: " + (note || "nope")
+    ].join("\n");
+    form.hidden = true;
+    result.hidden = false;
+    toast.textContent = "";
+    stamp.textContent = "3 years: locked in";
+    result.scrollIntoView({ behavior: "smooth", block: "start" });
+  });
+
+  document.getElementById("copy").addEventListener("click", function () {
+    var done = function () { toast.textContent = "Copied. Now paste it in our chat."; };
+    var fallback = function () {
+      summary.focus();
+      summary.select();
+      var ok = false;
+      try { ok = document.execCommand("copy"); } catch (err) { ok = false; }
+      toast.textContent = ok ? "Copied. Now paste it in our chat." : "Text is selected. Press and hold to copy it.";
+    };
+    if (navigator.clipboard && navigator.clipboard.writeText) {
+      navigator.clipboard.writeText(summary.value).then(done, fallback);
+    } else {
+      fallback();
+    }
+  });
+
+  document.getElementById("edit").addEventListener("click", function () {
+    result.hidden = true;
+    form.hidden = false;
+    stamp.textContent = "3 years: plan pending";
+    window.scrollTo({ top: 0, behavior: "smooth" });
+  });
+
+  form.addEventListener("change", function () { warn.hidden = true; });
+})();
+</script>
+
+</body>
+</html>
